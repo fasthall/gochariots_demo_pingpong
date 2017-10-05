@@ -1,8 +1,12 @@
 from concurrent import futures
+import sys
 import time
 import grpc
 import pingpong_pb2
 import pingpong_pb2_grpc
+
+sys.path.append('./gochariots-python-lib')
+import gochariots_client
 
 class PingPongServicer(pingpong_pb2_grpc.PingPongServicer):
     def __init__(self):
@@ -10,6 +14,15 @@ class PingPongServicer(pingpong_pb2_grpc.PingPongServicer):
     
     def call(self, request, context):
         message = request.message
+
+        seed = 123
+        cli = gochariots_client.RPCClient('169.231.235.55:9000')
+        record2 = gochariots_client.Record(seed)
+        record2.add('second', 'event')
+        record2.add('message', message)
+        record2.addHash(gochariots_client.getHash('first', 'event'))
+        cli.post(record2)
+
         return pingpong_pb2.RPCPong(message = 'hello, ' + message)
     
 def serve():
